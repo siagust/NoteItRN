@@ -20,11 +20,6 @@ This project is React Native version of the Native Version **https://github.com/
 
 ### 1. Clone the Repository
 
-```bash
-git clone https://github.com/yourusername/my-note-app.git
-cd my-note-app
-```
-
 ### 2. Install Dependencies
 
 Make sure you have **Node.js** installed. If not, download it from [nodejs.org](https://nodejs.org/).
