@@ -1,10 +1,19 @@
 import {useEffect, useRef, useState} from 'react';
-import {View, TextInput, StyleSheet, KeyboardAvoidingView, Platform, TouchableOpacity, Text} from 'react-native';
+import {
+    View,
+    TextInput,
+    StyleSheet,
+    KeyboardAvoidingView,
+    Platform,
+    TouchableOpacity,
+    Text,
+    NativeSyntheticEvent, TextInputKeyPressEventData
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Note } from '@/types/Note';
+import {Note} from '@/types/Note';
 import uuid from 'react-native-uuid';
-import { useRouter } from 'expo-router';
-import {Feather, Ionicons} from "@expo/vector-icons";
+import {useRouter} from 'expo-router';
+import {Ionicons} from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 
 export default function NewNote() {
@@ -18,7 +27,7 @@ export default function NewNote() {
         const saveNote = async () => {
             if (!title && !content) return;
 
-            const newNote: Note = { id: uuid.v4().toString(), title, content };
+            const newNote: Note = {id: uuid.v4().toString(), title, content};
 
             const json = await AsyncStorage.getItem('notes');
             const notes: Note[] = json ? JSON.parse(json) : [];
@@ -46,10 +55,21 @@ export default function NewNote() {
         setContent(prev => (prev.length === 0 || prev.endsWith('\n') ? prev + bullet : prev + '\n' + bullet));
     };
 
+    const handleKeyPress = (e: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
+        if (e.nativeEvent.key === 'Enter') {
+            const bullet = '• ';
+            setTimeout(() => {
+                setContent(prev => prev + bullet);
+            }, 100);
+        }
+    };
+
     return (
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.wrapper}>
             <View style={styles.topBar}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}><Ionicons name="arrow-back" size={22} /></TouchableOpacity>
+                <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
+                    <Ionicons name="arrow-back" size={22}/>
+                </TouchableOpacity>
             </View>
 
             <TextInput
@@ -66,15 +86,18 @@ export default function NewNote() {
                 multiline
                 value={content}
                 onChangeText={setContent}
+                onKeyPress={handleKeyPress}
             />
 
             <View style={styles.toolBar}>
                 <TouchableOpacity onPress={handleBulletPress} style={styles.toolBtn}>
-                    <Ionicons name="list" size={16} color="#000" />
+                    <Ionicons name="list" size={16} color="#000"/>
                 </TouchableOpacity>
 
                 {clipboardText ? (
-                    <TouchableOpacity style={styles.clipTextBtn} onPress={() => setContent(prev => prev + '\n' + clipboardText)}>
+                    <TouchableOpacity
+                        style={styles.clipTextBtn}
+                        onPress={() => setContent(prev => prev + '\n' + clipboardText)}>
                         <Text numberOfLines={1} style={styles.clipText}>{clipboardText}</Text>
                     </TouchableOpacity>
                 ) : null}
@@ -84,14 +107,14 @@ export default function NewNote() {
 }
 
 const styles = StyleSheet.create({
-    wrapper: { flex: 1, padding: 16, backgroundColor: '#fff' },
-    topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-    iconBtn: { padding: 8, borderRadius: 8, backgroundColor: '#f2f2f2', marginLeft: 4 },
-    topActions: { flexDirection: 'row', gap: 10 },
-    title: { fontSize: 24, fontWeight: 'bold', marginBottom: 10 },
-    content: { flex: 1, fontSize: 18, marginTop: 10, textAlignVertical: 'top' },
-    toolBar: { flexDirection: 'row', paddingTop: 10, alignItems: 'center' },
-    toolBtn: { marginRight: 12, padding: 6, borderRadius: 6, backgroundColor: '#f2f2f2' },
-    clipTextBtn: { flex: 1, backgroundColor: '#dce1e6', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },
-    clipText: { fontSize: 14, color: '#333' },
+    wrapper: {flex: 1, padding: 16, backgroundColor: '#fff'},
+    topBar: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12},
+    iconBtn: {padding: 8, borderRadius: 8, backgroundColor: '#f2f2f2', marginLeft: 4},
+    topActions: {flexDirection: 'row', gap: 10},
+    title: {fontSize: 24, fontWeight: 'bold', marginBottom: 10},
+    content: {flex: 1, fontSize: 18, marginTop: 10, textAlignVertical: 'top'},
+    toolBar: {flexDirection: 'row', paddingTop: 10, alignItems: 'center'},
+    toolBtn: {marginRight: 12, padding: 6, borderRadius: 6, backgroundColor: '#f2f2f2'},
+    clipTextBtn: {flex: 1, backgroundColor: '#dce1e6', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6},
+    clipText: {fontSize: 14, color: '#333'},
 });

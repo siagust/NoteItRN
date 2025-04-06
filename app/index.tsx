@@ -1,11 +1,12 @@
 import {View, FlatList, Text, TouchableOpacity, StyleSheet, TextInput, SafeAreaView} from 'react-native';
-import {useFocusEffect, useRouter} from 'expo-router';
+import {useRouter, useFocusEffect} from 'expo-router';
 import {useState} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Note} from '../types/Note';
 import SearchBar from '../components/SearchBar';
 import {Ionicons} from '@expo/vector-icons';
-import {useCallback} from 'react';
+import {useCallback, useEffect} from 'react';
+import debounce from 'lodash.debounce'; // Import debounce
 
 function highlightMatch(text: string, query: string) {
     if (!query) return <Text>{text}</Text>;
@@ -29,6 +30,7 @@ export default function HomeScreen() {
     const [notes, setNotes] = useState<Note[]>([]);
     const [search, setSearch] = useState('');
     const router = useRouter();
+    const [filteredNotes, setFilteredNotes] = useState<Note[]>([]);
 
     useFocusEffect(
         useCallback(() => {
@@ -41,14 +43,21 @@ export default function HomeScreen() {
         }, [])
     );
 
+    // Add "Add Note" entry at the top
+    const dummyAddNewNote = {
+        id: 'add-note',
+        title: 'Add meaning title here',
+        content: 'Add marvelous detail for your notes'
+    };
 
-    const filteredNotes = [
-        {id: 'add-note', title: 'Add meaning title here', content: 'Add marvelious detail for your notes'},
-        ...notes.filter(n =>
-            n.title.toLowerCase().includes(search.toLowerCase()) ||
-            n.content.toLowerCase().includes(search.toLowerCase())
-        ),
-    ];
+    const handleSearch = debounce((query: string) => {
+        const filtered = notes.filter(n => n.title.toLowerCase().includes(query.toLowerCase()));
+        setFilteredNotes([dummyAddNewNote, ...filtered]);
+    }, 500); // Wait 300ms after the user stops typing
+
+    useEffect(() => {
+        handleSearch(search); // Trigger the debounced search when the search term changes
+    }, [search]);
 
     return (
         <SafeAreaView style={styles.container}>
@@ -62,7 +71,7 @@ export default function HomeScreen() {
             <SearchBar value={search} onChange={setSearch}/>
 
             <FlatList
-                data={filteredNotes}
+                data={filteredNotes.length ? filteredNotes : [dummyAddNewNote, ...notes]}
                 keyExtractor={(item) => item.id}
                 numColumns={2}
                 columnWrapperStyle={styles.row}

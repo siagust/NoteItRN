@@ -1,5 +1,5 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import {useLocalSearchParams, useRouter} from 'expo-router';
+import {useEffect, useRef, useState} from 'react';
 import {
     View,
     TextInput,
@@ -13,13 +13,13 @@ import {
     TextInputKeyPressEventData, Share,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Note } from '../../types/Note';
+import {Note} from '../../types/Note';
 import * as Clipboard from 'expo-clipboard';
-import { Ionicons, Feather } from '@expo/vector-icons';
+import {Ionicons, Feather} from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
 
 export default function NoteDetail() {
-    const { id } = useLocalSearchParams();
+    const {id} = useLocalSearchParams();
     const router = useRouter();
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
@@ -54,7 +54,7 @@ export default function NoteDetail() {
             const notes: Note[] = json ? JSON.parse(json) : [];
             const index = notes.findIndex(n => n.id === id);
             if (index !== -1) {
-                notes[index] = { id, title, content };
+                notes[index] = {id, title, content};
                 await AsyncStorage.setItem('notes', JSON.stringify(notes));
             }
         };
@@ -65,7 +65,7 @@ export default function NoteDetail() {
     const deleteNote = async () => {
         if (!id || typeof id !== 'string') return;
         Alert.alert('Delete Note', 'Are you sure you want to delete this note?', [
-            { text: 'Cancel', style: 'cancel' },
+            {text: 'Cancel', style: 'cancel'},
             {
                 text: 'Delete', style: 'destructive', onPress: async () => {
                     const json = await AsyncStorage.getItem('notes');
@@ -80,21 +80,15 @@ export default function NoteDetail() {
 
     const handleBulletPress = () => {
         const bullet = '• ';
-        setContent(prev => (prev.length === 0 || prev.endsWith('\n') ? prev + bullet : prev + '\n' + bullet));
+        setContent(prev => prev + '\n' + bullet);
     };
 
     const handleKeyPress = (e: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
-        console.log("Key pressed");
-
         if (e.nativeEvent.key === 'Enter') {
-            console.log("Enter key pressed");
-            const lines = content.split('\n');
-            const lastLine = lines[lines.length - 1];
-            if (lastLine.trim().startsWith('•')) {
-                setTimeout(() => {
-                    setContent(prev => prev + '• ');
-                }, 100);
-            }
+            const bullet = '• ';
+            setTimeout(() => {
+                setContent(prev => prev + bullet);
+            }, 100);
         }
     };
 
@@ -109,10 +103,15 @@ export default function NoteDetail() {
     return (
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.wrapper}>
             <View style={styles.topBar}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}><Ionicons name="arrow-back" size={22} /></TouchableOpacity>
+                <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}><Ionicons name="arrow-back"
+                                                                                                 size={22}/></TouchableOpacity>
                 <View style={styles.topActions}>
-                    <TouchableOpacity onPress={shareNote} style={styles.iconBtn}><Feather name="share-2" size={20} /></TouchableOpacity>
-                    <TouchableOpacity onPress={deleteNote} style={styles.iconBtn}><Ionicons name="trash" size={22} /></TouchableOpacity>
+                    <TouchableOpacity onPress={shareNote} style={styles.iconBtn}>
+                        <Feather name="share-2" size={20}/>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={deleteNote} style={styles.iconBtn}>
+                        <Ionicons name="trash" size={22}/>
+                    </TouchableOpacity>
                 </View>
             </View>
 
@@ -135,11 +134,13 @@ export default function NoteDetail() {
 
             <View style={styles.toolBar}>
                 <TouchableOpacity onPress={handleBulletPress} style={styles.toolBtn}>
-                    <Ionicons name="list" size={16} color="#000" />
+                    <Ionicons name="list" size={16} color="#000"/>
                 </TouchableOpacity>
 
                 {clipboardText ? (
-                    <TouchableOpacity style={styles.clipTextBtn} onPress={() => setContent(prev => prev + '\n' + clipboardText)}>
+                    <TouchableOpacity
+                        style={styles.clipTextBtn}
+                        onPress={() => setContent(prev => prev + '\n' + clipboardText)}>
                         <Text numberOfLines={1} style={styles.clipText}>{clipboardText}</Text>
                     </TouchableOpacity>
                 ) : null}
@@ -149,14 +150,14 @@ export default function NoteDetail() {
 }
 
 const styles = StyleSheet.create({
-    wrapper: { flex: 1, padding: 16, backgroundColor: '#fff' },
-    topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-    iconBtn: { padding: 8, borderRadius: 8, backgroundColor: '#f2f2f2', marginLeft: 4 },
-    topActions: { flexDirection: 'row', gap: 10 },
-    title: { fontSize: 24, fontWeight: 'bold', marginBottom: 10 },
-    content: { flex: 1, fontSize: 18, marginTop: 10, textAlignVertical: 'top' },
-    toolBar: { flexDirection: 'row', paddingTop: 10, alignItems: 'center' },
-    toolBtn: { marginRight: 12, padding: 6, borderRadius: 6, backgroundColor: '#f2f2f2' },
-    clipTextBtn: { flex: 1, backgroundColor: '#dce1e6', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },
-    clipText: { fontSize: 14, color: '#333' },
+    wrapper: {flex: 1, padding: 16, backgroundColor: '#fff'},
+    topBar: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12},
+    iconBtn: {padding: 8, borderRadius: 8, backgroundColor: '#f2f2f2', marginLeft: 4},
+    topActions: {flexDirection: 'row', gap: 10},
+    title: {fontSize: 24, fontWeight: 'bold', marginBottom: 10},
+    content: {flex: 1, fontSize: 18, marginTop: 10, textAlignVertical: 'top'},
+    toolBar: {flexDirection: 'row', paddingTop: 10, alignItems: 'center'},
+    toolBtn: {marginRight: 12, padding: 6, borderRadius: 6, backgroundColor: '#f2f2f2'},
+    clipTextBtn: {flex: 1, backgroundColor: '#dce1e6', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6},
+    clipText: {fontSize: 14, color: '#333'},
 });
