@@ -33,11 +33,9 @@ export default function NewNote() {
             const notes: Note[] = json ? JSON.parse(json) : [];
             notes.unshift(newNote);
             await AsyncStorage.setItem('notes', JSON.stringify(notes));
-
-            router.back();
         };
 
-        const timeout = setTimeout(saveNote, 1000);
+        const timeout = setTimeout(saveNote, 500);
         return () => clearTimeout(timeout);
     }, [title, content]);
 

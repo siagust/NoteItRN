@@ -1,11 +1,10 @@
-import {View, FlatList, Text, TouchableOpacity, StyleSheet, TextInput, SafeAreaView} from 'react-native';
-import {useRouter, useFocusEffect} from 'expo-router';
-import {useState} from 'react';
+import {View, FlatList, Text, TouchableOpacity, StyleSheet, SafeAreaView} from 'react-native';
+import {useRouter} from 'expo-router';
+import {useState, useEffect, useCallback} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Note} from '../types/Note';
 import SearchBar from '../components/SearchBar';
 import {Ionicons} from '@expo/vector-icons';
-import {useCallback, useEffect} from 'react';
 import debounce from 'lodash.debounce'; // Import debounce
 
 function highlightMatch(text: string, query: string) {
@@ -25,39 +24,49 @@ function highlightMatch(text: string, query: string) {
     );
 }
 
-
 export default function HomeScreen() {
     const [notes, setNotes] = useState<Note[]>([]);
     const [search, setSearch] = useState('');
     const router = useRouter();
     const [filteredNotes, setFilteredNotes] = useState<Note[]>([]);
 
-    useFocusEffect(
-        useCallback(() => {
-            const loadNotes = async () => {
-                const json = await AsyncStorage.getItem('notes');
-                console.log(json);
-                if (json) setNotes(JSON.parse(json));
-            };
-            loadNotes();
-        }, [])
+    // Debounced search handler
+    const handleSearch = useCallback(
+        debounce((query: string) => {
+            const filtered = notes.filter(n => n.title.toLowerCase().includes(query.toLowerCase()));
+            setFilteredNotes([dummyAddNewNote, ...filtered]); // Keep dummy note at the top
+        }, 500),
+        [notes]
     );
+
+    useEffect(() => {
+        const loadNotes = async () => {
+            const json = await AsyncStorage.getItem('notes');
+            console.log(json);
+            if (json) {
+                const loadedNotes = JSON.parse(json);
+                setNotes(loadedNotes);
+                setFilteredNotes([dummyAddNewNote, ...loadedNotes]); // Ensure dummy note is always at the top
+            }
+        };
+
+        loadNotes();
+    }, []); // Only load notes when component mounts
 
     // Add "Add Note" entry at the top
     const dummyAddNewNote = {
         id: 'add-note',
-        title: 'Add meaning title here',
+        title: 'Add meaningful title here',
         content: 'Add marvelous detail for your notes'
     };
 
-    const handleSearch = debounce((query: string) => {
-        const filtered = notes.filter(n => n.title.toLowerCase().includes(query.toLowerCase()));
-        setFilteredNotes([dummyAddNewNote, ...filtered]);
-    }, 500); // Wait 300ms after the user stops typing
-
     useEffect(() => {
-        handleSearch(search); // Trigger the debounced search when the search term changes
-    }, [search]);
+        if (search) {
+            handleSearch(search); // Trigger search only on search input change
+        } else {
+            setFilteredNotes([dummyAddNewNote, ...notes]); // Show all notes when no search query
+        }
+    }, [search, notes, handleSearch]);
 
     return (
         <SafeAreaView style={styles.container}>
@@ -71,7 +80,7 @@ export default function HomeScreen() {
             <SearchBar value={search} onChange={setSearch}/>
 
             <FlatList
-                data={filteredNotes.length ? filteredNotes : [dummyAddNewNote, ...notes]}
+                data={filteredNotes}
                 keyExtractor={(item) => item.id}
                 numColumns={2}
                 columnWrapperStyle={styles.row}
@@ -127,7 +136,5 @@ const styles = StyleSheet.create({
     },
     cardTitle: {fontSize: 16, fontWeight: 'bold', marginBottom: 6},
     cardContent: {fontSize: 14, color: '#333'},
-    filter: {
-        marginRight: 4
-    }
+    filter: {marginRight: 4}
 });
