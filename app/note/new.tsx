@@ -22,22 +22,50 @@ export default function NewNote() {
     const router = useRouter();
     const [clipboardText, setClipboardText] = useState('');
     const inputRef = useRef<TextInput>(null);
+    const [isNewNote, setIsNewNote] = useState(true); // Add a flag to track if the note is new
 
     useEffect(() => {
         const saveNote = async () => {
             if (!title && !content) return;
 
-            const newNote: Note = {id: uuid.v4().toString(), title, content};
+            let newNote: Note;
+            if (isNewNote) {
+                newNote = {id: uuid.v4().toString(), title, content};
+                setIsNewNote(false); // Mark the note as saved
+            } else {
+                // If the note is not new, find the existing note and update it
+                const json = await AsyncStorage.getItem('notes');
+                const notes: Note[] = json ? JSON.parse(json) : [];
+                const existingNoteIndex = notes.findIndex(n => n.title === title && n.content === content);
+                if (existingNoteIndex !== -1) {
+                    newNote = notes[existingNoteIndex];
+                    newNote.title = title;
+                    newNote.content = content;
+                } else {
+                    // This should not happen in normal cases, but handle it just in case
+                    newNote = {id: uuid.v4().toString(), title, content};
+                }
+            }
 
             const json = await AsyncStorage.getItem('notes');
             const notes: Note[] = json ? JSON.parse(json) : [];
-            notes.unshift(newNote);
+            if (isNewNote) {
+                notes.unshift(newNote);
+            } else {
+                const existingNoteIndex = notes.findIndex(n => n.id === newNote.id);
+                if (existingNoteIndex !== -1) {
+                    notes[existingNoteIndex] = newNote;
+                }
+            }
+
             await AsyncStorage.setItem('notes', JSON.stringify(notes));
+
+            router.back();
         };
 
-        const timeout = setTimeout(saveNote, 500);
+        const timeout = setTimeout(saveNote, 1000);
         return () => clearTimeout(timeout);
-    }, [title, content]);
+    }, [title, content, isNewNote]);
 
     useEffect(() => {
         fetchClipboard();
@@ -53,21 +81,11 @@ export default function NewNote() {
         setContent(prev => (prev.length === 0 || prev.endsWith('\n') ? prev + bullet : prev + '\n' + bullet));
     };
 
-    const handleKeyPress = (e: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
-        if (e.nativeEvent.key === 'Enter') {
-            const bullet = '• ';
-            setTimeout(() => {
-                setContent(prev => prev + bullet);
-            }, 100);
-        }
-    };
-
     return (
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.wrapper}>
             <View style={styles.topBar}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
-                    <Ionicons name="arrow-back" size={22}/>
-                </TouchableOpacity>
+                <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}><Ionicons name="arrow-back"
+                                                                                                 size={22}/></TouchableOpacity>
             </View>
 
             <TextInput
@@ -84,7 +102,6 @@ export default function NewNote() {
                 multiline
                 value={content}
                 onChangeText={setContent}
-                onKeyPress={handleKeyPress}
             />
 
             <View style={styles.toolBar}>
@@ -93,9 +110,8 @@ export default function NewNote() {
                 </TouchableOpacity>
 
                 {clipboardText ? (
-                    <TouchableOpacity
-                        style={styles.clipTextBtn}
-                        onPress={() => setContent(prev => prev + '\n' + clipboardText)}>
+                    <TouchableOpacity style={styles.clipTextBtn}
+                                      onPress={() => setContent(prev => prev + '\n' + clipboardText)}>
                         <Text numberOfLines={1} style={styles.clipText}>{clipboardText}</Text>
                     </TouchableOpacity>
                 ) : null}
