@@ -5,6 +5,8 @@ This project is React Native version of the Native Version **https://github.com/
 
 **Note!t** is a mobile note-taking app built with **React Native**, using **Expo** for fast development and **TypeScript** for type safety. It allows users to manage their notes, including adding, editing, and deleting notes, as well as searching through them with an optimized experience.
 
+<img src="assets/images/ezgif-8a60fff076d88b.gif" width="260"> 
+
 
 ## 📦 Tech Stack
 
