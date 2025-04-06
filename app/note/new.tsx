@@ -59,8 +59,6 @@ export default function NewNote() {
             }
 
             await AsyncStorage.setItem('notes', JSON.stringify(notes));
-
-            router.back();
         };
 
         const timeout = setTimeout(saveNote, 1000);
