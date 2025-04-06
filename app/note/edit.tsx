@@ -140,7 +140,7 @@ export default function NoteDetail() {
                 {clipboardText ? (
                     <TouchableOpacity
                         style={styles.clipTextBtn}
-                        onPress={() => setContent(prev => prev + '\n' + clipboardText)}>
+                        onPress={() => setContent(prev => prev + clipboardText)}>
                         <Text numberOfLines={1} style={styles.clipText}>{clipboardText}</Text>
                     </TouchableOpacity>
                 ) : null}
