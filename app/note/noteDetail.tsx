@@ -17,9 +17,11 @@ import {Note} from '../../types/Note';
 import * as Clipboard from 'expo-clipboard';
 import {Ionicons, Feather} from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
+import uuid from "react-native-uuid";
 
 export default function NoteDetail() {
-    const {id} = useLocalSearchParams();
+    const {idParams} = useLocalSearchParams();
+    const [id, setId] = useState('');
     const router = useRouter();
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
@@ -27,9 +29,17 @@ export default function NoteDetail() {
     const inputRef = useRef<TextInput>(null);
 
     useEffect(() => {
+        if (typeof idParams === 'string') {
+            setId(idParams)
+        } else {
+            setId('')
+        }
+    }, [idParams]);
+
+    useEffect(() => {
         const loadNote = async () => {
             const json = await AsyncStorage.getItem('notes');
-            if (json && typeof id === 'string') {
+            if (json && id !== '') {
                 const notes: Note[] = JSON.parse(json);
                 const target = notes.find(n => n.id === id);
                 if (target) {
@@ -49,12 +59,48 @@ export default function NoteDetail() {
 
     useEffect(() => {
         const saveNote = async () => {
-            if (!id || typeof id !== 'string') return;
-            const json = await AsyncStorage.getItem('notes');
-            const notes: Note[] = json ? JSON.parse(json) : [];
-            const index = notes.findIndex(n => n.id === id);
-            if (index !== -1) {
-                notes[index] = {id, title, content};
+            if (!title && !content) return;
+
+            if (id !== '') {
+                const json = await AsyncStorage.getItem('notes');
+                const notes: Note[] = json ? JSON.parse(json) : [];
+                const index = notes.findIndex(n => n.id === id);
+                if (index !== -1) {
+                    notes[index] = {id, title, content};
+                    await AsyncStorage.setItem('notes', JSON.stringify(notes));
+                }
+            } else {
+                let newNote: Note;
+                if (id === '') {
+                    const newId = uuid.v4().toString()
+                    newNote = {id: newId, title, content};
+                } else {
+                    // If the note is not new, find the existing note and update it
+                    const json = await AsyncStorage.getItem('notes');
+                    const notes: Note[] = json ? JSON.parse(json) : [];
+                    const existingNoteIndex = notes.findIndex(n => n.id === id);
+                    if (existingNoteIndex !== -1) {
+                        newNote = notes[existingNoteIndex];
+                        newNote.title = title;
+                        newNote.content = content;
+                    } else {
+                        // This should not happen in normal cases, but handle it just in case
+                        newNote = {id: uuid.v4().toString(), title, content};
+                    }
+                }
+
+                const json = await AsyncStorage.getItem('notes');
+                const notes: Note[] = json ? JSON.parse(json) : [];
+                if (id === '') {
+                    notes.unshift(newNote);
+                    setId(newNote.id);
+                } else {
+                    const existingNoteIndex = notes.findIndex(n => n.id === newNote.id);
+                    if (existingNoteIndex !== -1) {
+                        notes[existingNoteIndex] = newNote;
+                    }
+                }
+
                 await AsyncStorage.setItem('notes', JSON.stringify(notes));
             }
         };
@@ -63,7 +109,7 @@ export default function NoteDetail() {
     }, [title, content]);
 
     const deleteNote = async () => {
-        if (!id || typeof id !== 'string') return;
+        if (id === '') return;
         Alert.alert('Delete Note', 'Are you sure you want to delete this note?', [
             {text: 'Cancel', style: 'cancel'},
             {

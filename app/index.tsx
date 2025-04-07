@@ -89,9 +89,9 @@ export default function HomeScreen() {
                     <TouchableOpacity
                         onPress={() => {
                             if (item.id === 'add-note') {
-                                router.push('/note/new');
+                                router.push('/note/noteDetail');
                             } else {
-                                router.push({pathname: '/note/edit', params: {id: item.id}});
+                                router.push({pathname: '/note/noteDetail', params: {idParams: item.id}});
                             }
                         }}
                         style={[styles.card, item.id === 'add-note' ? styles.addCard : {}]}
